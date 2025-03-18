@@ -1,103 +1,175 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { Canvas } from '@react-three/fiber';
+import { Stars, Text, PerspectiveCamera, OrbitControls } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { motion } from 'framer-motion';
+import { useFloatingAnimation } from '@/hooks/use3D';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+
+// Animated 3D text component
+const AnimatedText3D: React.FC<{ text: string; position: [number, number, number]; fontSize?: number }> = ({ 
+  text, 
+  position, 
+  fontSize = 0.5 
+}) => {
+  const { mesh } = useFloatingAnimation(0.2, 0.5);
+  
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <group position={position} ref={mesh}>
+      <Text
+        color="#ffffff"
+        fontSize={fontSize}
+        maxWidth={200}
+        lineHeight={1}
+        letterSpacing={0.02}
+        textAlign="center"
+        font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZs.woff"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.04}
+        outlineColor="#000000"
+      >
+        {text}
+      </Text>
+    </group>
+  );
+};
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+// Floating 3D box component
+const FloatingBox: React.FC<{ position: [number, number, number]; color: string; size?: number }> = ({ 
+  position, 
+  color, 
+  size = 1 
+}) => {
+  const { mesh } = useFloatingAnimation(0.3, Math.random() * 0.5 + 0.5);
+  
+  return (
+    <mesh position={position} ref={mesh}>
+      <boxGeometry args={[size, size, size]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  );
+};
+
+// Home page component
+export default function Home() {
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Prevent SSR issues with Three.js
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-2xl font-bold text-white">Loading...</div>
+      </div>
+    );
+  }
+  
+  return (
+    <main className="min-h-screen flex flex-col overflow-hidden">
+      {/* Header */}
+      <Header />
+      
+      {/* 3D Canvas Background */}
+      <div className="absolute inset-0 -z-10">
+        <Canvas>
+          <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={50} />
+          <OrbitControls 
+            enablePan={false}
+            enableZoom={false}
+            enableRotate={true}
+            autoRotate
+            autoRotateSpeed={0.5}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+          
+          <color attach="background" args={['#050816']} />
+          <ambientLight intensity={0.2} />
+          <pointLight position={[10, 10, 10]} intensity={0.8} />
+          
+          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+          
+          {/* 3D Title */}
+          <AnimatedText3D 
+            text="CODE IN 3D"
+            position={[0, 2, 0]}
+            fontSize={1.5}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+          
+          {/* Subtitle */}
+          <AnimatedText3D 
+            text="Interactive Developer Playground"
+            position={[0, 0.5, 0]}
+            fontSize={0.5}
           />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          
+          {/* Decorative floating boxes */}
+          <FloatingBox position={[-4, 2, -5]} color="#3b82f6" size={0.8} />
+          <FloatingBox position={[5, -1, -3]} color="#10b981" size={1.2} />
+          <FloatingBox position={[-3, -2, -6]} color="#8b5cf6" size={1} />
+          <FloatingBox position={[4, 3, -4]} color="#f59e0b" size={0.7} />
+          <FloatingBox position={[0, -3, -5]} color="#ef4444" size={0.9} />
+          
+          <EffectComposer>
+            <Bloom luminanceThreshold={0.2} intensity={0.8} levels={9} mipmapBlur />
+            <Vignette offset={0.5} darkness={0.5} eskil={false} />
+          </EffectComposer>
+        </Canvas>
+      </div>
+      
+      {/* Content overlay */}
+      <div className="relative z-10 flex flex-col items-center justify-center h-full p-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="mb-8"
+        >
+          <h1 className="text-6xl md:text-7xl font-extrabold mb-4 gradient-text">
+            CODE IN 3D
+          </h1>
+          <p className="text-xl md:text-2xl max-w-2xl mx-auto text-blue-200">
+            Visualize and interact with code in a 3D environment
+          </p>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="space-y-4 md:space-y-0 md:space-x-4 md:flex"
+        >
+          <Link href="/playground">
+            <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-bold shadow-lg transition-all hover:shadow-blue-500/30 hover:shadow-xl">
+              Launch Playground
+            </button>
+          </Link>
+          
+          <Link href="/about">
+            <button className="px-8 py-4 bg-transparent border-2 border-blue-500 hover:bg-blue-900/20 rounded-lg text-lg font-bold shadow-lg transition-all">
+              Learn More
+            </button>
+          </Link>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="absolute bottom-8 text-sm text-gray-400"
+        >
+          <p>Built with Next.js, TypeScript, and Three.js</p>
+        </motion.div>
+      </div>
+      
+      {/* Footer */}
+      <Footer />
+    </main>
   );
 }
